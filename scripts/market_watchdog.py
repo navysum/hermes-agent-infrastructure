@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Temporary the operator work-mode crypto watchdog.
-Prints only when something worth Slack-alerting changes.
+"""Market watchdog — monitors the market data bot.
+Prints only when something worth alerting on changes.
 """
 from __future__ import annotations
 import json, sqlite3, subprocess, time

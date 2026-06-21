@@ -149,7 +149,7 @@ def bb_rsi_alerts(state: dict) -> list[str]:
                 f"Est units {est_units} using {bot.CAPITAL_ALLOC_PCT:.0%} allocation of {currency} {balance:.2f}.\n"
                 f"Auto-trade filters: {'READY' if auto_ready else 'BLOCKED'} "
                 f"(session={sess_ok}, news={'clear' if not news_block else news_block}, spread={spread if spread is not None else 'unknown'}p/{spread_limit}p).\n"
-                f"Manual note: check OANDA open trades first so you don't double-enter alongside Homer’s automatic Strategy bot."
+                f"Manual note: check OANDA open trades first so you don't double-enter alongside the automated strategy bot."
             )
             state['last_bb_signal_key'] = key
     except Exception as e:

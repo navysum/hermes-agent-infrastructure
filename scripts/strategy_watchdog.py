@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""the operator Strategy trading watchdog.
-Prints ONLY when something needs the operator's attention; silence means all normal.
+"""Strategy trading watchdog.
+Prints ONLY when something needs attention; silence means all normal.
 No order placement. No config mutation. No secrets printed.
 """
 import os, re, sqlite3, subprocess, json
