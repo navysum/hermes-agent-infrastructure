@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quiet Quantum FX paper-readiness watcher.
+"""Quiet FX paper-readiness watcher.
 
 Prints only when paper evidence crosses a milestone or reaches 100.
 Silence means no user-facing update needed.
@@ -11,8 +11,8 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB = Path("/root/quantum-forex-bot/state/live_execution.sqlite3")
-STATE = Path("/root/.hermes/state/quantum_paper_readiness_watch.json")
+DB = Path("/root/fx-signal-bot/state/live_execution.sqlite3")
+STATE = Path("/root/.hermes/state/fx_paper_readiness_watch.json")
 TARGET = 100
 MILESTONE_STEP = 10
 
@@ -33,7 +33,7 @@ def save_state(state: dict) -> None:
 
 def main() -> int:
     if not DB.exists():
-        print(f"D'oh: Quantum FX paper-readiness ledger missing: {DB}")
+        print(f"D'oh: FX paper-readiness ledger missing: {DB}")
         return 0
 
     con = sqlite3.connect(DB)
@@ -69,7 +69,7 @@ def main() -> int:
     save_state(state)
 
     lines = [
-        f"Quantum FX paper-readiness progress — {count}/{TARGET} paper trades",
+        f"FX paper-readiness progress — {count}/{TARGET} paper trades",
         f"Remaining: {remaining}",
     ]
     if latest:

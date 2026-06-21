@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /root/quantum-forex-bot
+cd /root/fx-signal-bot
 mkdir -p state reports
-OUT=$(PYTHONPATH=src python scripts/current_signal.py --instrument USD_JPY --threshold 0.30 --target-mode tp_sl --target-horizon 12 --regime-split --allow-live-data)
+OUT=$(PYTHONPATH=src python scripts/current_signal.py --instrument USD_JPY --threshold 0.50 --target-mode tp_sl --target-horizon 24 --regime-split --allow-live-data)
 EVENT=$(python3 - <<'PY' "$OUT"
 import json, sys, datetime
 payload=json.loads(sys.argv[1])
@@ -18,5 +18,5 @@ print(json.loads(sys.argv[1]).get('signal','FLAT'))
 PY
 )
 if [ "$SIG" != "FLAT" ]; then
-  printf 'USD_JPY shadow alert only — no order placed. the operator approval required for any real-money execution.\n%s\nReport: /root/quantum-forex-bot/reports/shadow_alert_report.md\n' "$OUT"
+  printf 'USD_JPY shadow alert only — no order placed. operator approval required for any real-money execution.\n%s\nReport: /root/fx-signal-bot/reports/shadow_alert_report.md\n' "$OUT"
 fi

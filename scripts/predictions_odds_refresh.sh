@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="/root/worldcup-prediction-bot"
-LOCK="/tmp/worldcup_odds_refresh.lock"
+REPO="/root/predictions-bot"
+LOCK="/tmp/predictions_odds_refresh.lock"
 LOG="$(mktemp)"
 trap 'rm -f "$LOG"' EXIT
 
@@ -19,11 +19,11 @@ run() {
 }
 
 if ! {
-  run .venv/bin/python -m app.cli ingest-live-odds --provider odds-api-io --limit 16 --league international-fifa-world-cup --bookmakers Bet365,Unibet
+  run .venv/bin/python -m app.cli ingest-live-odds --provider odds-api-io --limit 16 --league international-football --bookmakers Bet365,Unibet
   run .venv/bin/python -m app.cli generate-snapshots --limit 16 --max-age-hours 24
   run .venv/bin/python -m app.cli health-gate --required
 }; then
-  echo "D'oh — World Cup odds refresh failed."
+  echo "D'oh — Predictions odds refresh failed."
   tail -120 "$LOG"
   exit 1
 fi

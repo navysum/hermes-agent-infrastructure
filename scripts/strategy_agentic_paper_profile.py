@@ -7,7 +7,7 @@ import sys
 
 CMD = [
     sys.executable,
-    "/root/quantum-forex-bot/scripts/agentic_paper_profile.py",
+    "/root/fx-signal-bot/scripts/agentic_paper_profile.py",
     "--instrument",
     "USD_JPY",
     "--granularity",
@@ -16,9 +16,9 @@ CMD = [
     "250",
     "--allow-live-data",
     "--db",
-    "/root/quantum-forex-bot/state/sector7g_agentic_paper.sqlite3",
+    "/root/fx-signal-bot/state/strategy_agentic_paper.sqlite3",
     "--profile",
-    "sector7g-agentic-paper",
+    "strategy-agentic-paper",
     "--starting-equity",
     "1000",
     "--min-confidence",
@@ -27,16 +27,16 @@ CMD = [
     "0.003",
 ]
 
-proc = subprocess.run(CMD, cwd="/root/quantum-forex-bot", capture_output=True, text=True, timeout=120)
+proc = subprocess.run(CMD, cwd="/root/fx-signal-bot", capture_output=True, text=True, timeout=120)
 if proc.returncode != 0:
-    print("D'oh. Sector 7-G paper profile run failed.")
+    print("D'oh. Strategy paper profile run failed.")
     print(proc.stderr.strip() or proc.stdout.strip())
     raise SystemExit(proc.returncode)
 
 try:
     result = json.loads(proc.stdout)
 except json.JSONDecodeError:
-    print("D'oh. Sector 7-G paper profile returned non-JSON output.")
+    print("D'oh. Strategy paper profile returned non-JSON output.")
     print(proc.stdout.strip())
     raise SystemExit(1)
 
@@ -46,7 +46,7 @@ closed = int(result.get("closed_positions") or 0)
 
 if status == "PAPER_POSITION_OPENED" or closed > 0:
     lines = [
-        "Woo-hoo — Sector 7-G paper profile updated.",
+        "Woo-hoo — Strategy paper profile updated.",
         f"Status: {status}",
         f"Closed positions this run: {closed}",
         f"Equity: {summary.get('equity')}",

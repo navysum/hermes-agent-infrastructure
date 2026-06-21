@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""the operator Sector 7-G trading watchdog.
+"""the operator Strategy trading watchdog.
 Prints ONLY when something needs the operator's attention; silence means all normal.
 No order placement. No config mutation. No secrets printed.
 """
@@ -7,13 +7,13 @@ import os, re, sqlite3, subprocess, json
 from datetime import datetime, timezone
 
 SERVICES = [
-    "forexbot.service",
-    "crypto-bot.service",
-    "crypto-bot-lab.service",
-    "quantum-fx-usdjpy-execution.timer",
+    "fx-bot.service",
+    "market-bot.service",
+    "market-bot-lab.service",
+    "fx-exec.timer",
 ]
-OPTIONAL_ONESHOT = "quantum-fx-usdjpy-execution.service"
-MIN_OANDA_NAV_GBP = 14.00
+OPTIONAL_ONESHOT = "fx-exec.service"
+MIN_OANDA_NAV_GBP = 100.00
 MAX_OPEN_OANDA_TRADES = 1
 
 
@@ -50,7 +50,7 @@ def journal_tail(s, n="20"):
 
 
 def check_oanda(alerts):
-    e = env("/root/bots/forexbot/.env")
+    e = env("/root/bots/fx-bot/.env")
     token = e.get("OANDA_API_KEY") or e.get("OANDA_ACCESS_TOKEN")
     acct = e.get("OANDA_ACCOUNT_ID")
     if not token or not acct:
@@ -79,16 +79,16 @@ def check_oanda(alerts):
         alerts.append(f"D'oh: OANDA watchdog exception: {ex}")
 
 
-def check_quantum(alerts):
-    db = "/root/quantum-forex-bot/state/live_execution.sqlite3"
+def check_fx_signal(alerts):
+    db = "/root/fx-signal-bot/state/live_execution.sqlite3"
     if not os.path.exists(db):
-        alerts.append("D'oh: Quantum FX live_execution.sqlite3 missing.")
+        alerts.append("D'oh: FX live_execution.sqlite3 missing.")
         return
     try:
         con = sqlite3.connect(db)
         row = con.execute("SELECT created_at_utc, mode, action, detail_json FROM run_events ORDER BY id DESC LIMIT 1").fetchone()
         if not row:
-            alerts.append("D'oh: Quantum FX has no run_events.")
+            alerts.append("D'oh: FX has no run_events.")
             return
         created, mode, action, detail = row
         # Alert only for real live-risk actions/errors, not normal flat/open-trade skips
@@ -102,15 +102,15 @@ def check_quantum(alerts):
             "DRY_RUN_READY",
         }
         if action not in normal_actions:
-            alerts.append(f"Quantum FX action: {action} mode={mode} at {created}. Detail: {detail[:300]}")
+            alerts.append(f"FX action: {action} mode={mode} at {created}. Detail: {detail[:300]}")
     except Exception as ex:
-        alerts.append(f"D'oh: Quantum FX DB check failed: {ex}")
+        alerts.append(f"D'oh: FX DB check failed: {ex}")
 
 
 def check_crypto_ledgers(alerts):
     for label, db, min_bal in [
-        ("crypto main", "/root/crypto-bot/state.sqlite3", 990.0),
-        ("crypto lab", "/root/crypto-bot-lab/state.sqlite3", 490.0),
+        ("crypto main", "/root/market-bot/state.sqlite3", 990.0),
+        ("crypto lab", "/root/market-bot-lab/state.sqlite3", 490.0),
     ]:
         if not os.path.exists(db):
             alerts.append(f"D'oh: {label} ledger missing: {db}")
@@ -137,18 +137,18 @@ def main():
     if service_active(OPTIONAL_ONESHOT) == "failed":
         alerts.append(f"D'oh: {OPTIONAL_ONESHOT} failed.")
 
-    for s in ["crypto-bot.service", "crypto-bot-lab.service", "quantum-fx-usdjpy-execution.service"]:
+    for s in ["market-bot.service", "market-bot-lab.service", "fx-exec.service"]:
         tail = journal_tail(s)
         bad = [ln for ln in tail.splitlines() if re.search(r"\b(ERROR|CRITICAL|Traceback|Exception|failed|rejected)\b", ln, re.I)]
         if bad:
             alerts.append(f"{s} suspicious log lines:\n" + "\n".join(bad[-4:]))
 
     check_oanda(alerts)
-    check_quantum(alerts)
+    check_fx_signal(alerts)
     check_crypto_ledgers(alerts)
 
     if alerts:
-        print("Sector 7-G trading watchdog alert — " + datetime.now(timezone.utc).isoformat(timespec="seconds"))
+        print("Strategy trading watchdog alert — " + datetime.now(timezone.utc).isoformat(timespec="seconds"))
         print("\n".join(f"- {a}" for a in alerts))
         print("No autonomous trades placed; this is monitor/guardrail output only.")
 

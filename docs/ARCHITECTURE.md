@@ -58,18 +58,20 @@ a scheduler, third-party integrations, and a self-healing watchdog.
 - Keeps tone/role consistent without a separate model call.
 
 ### 4. Skills (`skills/`)
-Self-contained capability packs the agent discovers and loads on demand:
-- **operator-live-data-tools** — CLI tools for live read-only data (FX account,
-  calendar, personal note vault).
-- **hermes-operator-operations** — a runbook skill: service safety, profile
-  management, credential handling, system checks.
-- **infrastructure-audit** — a generic framework for auditing service health,
-  data pipelines, accuracy and reliability, producing severity-rated reports.
+Self-contained capability packs the agent discovers and loads on demand. Each is
+a single Markdown file with YAML frontmatter (`name`, `description`, `tags`); the
+agent matches the description against user intent and loads the body on demand:
+- **service-health-check** — a generic, read-only skill that inspects systemd
+  service state, port bindings, heartbeat freshness and recent errors, then
+  reports a concise status. Safe to run unattended.
+- **infrastructure-audit** — a framework for auditing service health and data
+  pipelines, separating infrastructure health from data/model readiness and
+  producing severity-rated reports with remediation steps.
 
 ### 5. Scheduling (`scripts/job_*.sh`, `scripts/jw_lib.sh`)
 Two classes of scheduled work, both driven by the agent's cron scheduler:
 - **Deterministic** — run a script, alert only on non-empty output
-  (OANDA signals, Whoop sync, sector watchdogs, world-cup odds refresh).
+  (OANDA signals, Whoop sync, strategy watchdogs, predictions odds refresh).
 - **Agentic** — the agent itself generates the output (daily morning brief,
   nightly reflection) and delivers it over Telegram.
 - `jw_lib.sh` provides **de-duplication** and per-job state so re-runs or

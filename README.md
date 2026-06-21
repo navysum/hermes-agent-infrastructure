@@ -141,7 +141,7 @@ flowchart TD
     end
 
     subgraph Jobs["Scheduled jobs (cron)"]
-        DET[Deterministic<br/>OANDA · Whoop · sector watchdogs]
+        DET[Deterministic<br/>OANDA · Whoop · strategy watchdogs]
         AGN[Agentic<br/>morning brief · nightly reflect]
     end
 
@@ -304,9 +304,8 @@ consequential.
 │   ├── job_*.sh                 #   cron entrypoints (dedup-wrapped)
 │   └── qc_*.sh                  #   instant Telegram quick-commands
 ├── skills/                      # self-contained agent capability packs
-│   ├── operator-live-data-tools/
-│   ├── hermes-operator-operations/
-│   └── infrastructure-audit/
+│   ├── service-health-check/    #   generic, read-only service health skill
+│   └── infrastructure-audit/    #   audit framework with severity ratings
 ├── ops/
 │   ├── self_heal.sh             # watchdog + failover
 │   └── hermes-dashboard-tailnet-proxy.py

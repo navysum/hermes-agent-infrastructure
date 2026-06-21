@@ -159,16 +159,23 @@ For each dimension, note:
 - `tail/head -n <count>` — recent data samples
 - Memory/CPU: `ps aux` column 3 (CPU%), column 4 (memory%)
 
-## Sports Prediction Bot / Model Readiness Additions
+## Data-pipeline & model readiness
 
-When auditing sports prediction bots, explicitly separate **infrastructure health** from **model/betting readiness**:
+When a system includes a data pipeline or a model, separate **infrastructure
+health** from **data/model readiness** explicitly:
 
-- Verify authoritative competition schedule first, then compare DB fixture ordering and kickoff timestamps.
-- Check timezone parsing for fixture feeds that split `date` and `time` fields (e.g. `13:00 UTC-6`); date-only ingestion can silently flatten all kickoffs to midnight and corrupt ordering/reconciliation.
-- After fixture parser changes, query for duplicate logical fixtures grouped by home team, away team, and stage; improved kickoff parsing can change source-ID seeds and create duplicate rows.
-- Treat live odds as a hard gate for value-betting claims: odds rows present, fresh, reconciled to fixtures, and provider quota metadata captured.
-- Rate baseline historical-prior models honestly: if there is no team strength, form, squad/news, xG, odds-implied probabilities, edge calculation, calibration, or backtest, call it a research baseline rather than a betting model.
+- Validate the data source against an authoritative reference before trusting it
+  (ordering, timestamps, timezone parsing — date-only ingestion can silently
+  flatten timestamps and corrupt ordering/reconciliation).
+- After parser/schema changes, check for duplicate logical rows introduced by
+  changed source-ID seeds.
+- Treat freshness as a hard gate: required rows present, recent, reconciled to
+  their keys, and provider quota/metadata captured.
+- Rate models honestly — if there is no feature set, calibration, or backtest,
+  call it a research baseline rather than a production model.
 
-## References
-- See `references/bots-dashboard-2026-05-26-audit.md` for worked example: full 7-section audit of the operator's trading bot dashboard with 7 specific fixes deployed (HEAD 501 fix, Arb Scanner tracking, win rate metrics, margin visibility, stale data warnings, Telegram alerts framework).
-- See `references/worldcup-prediction-bot-audit-2026-06.md` for the reusable World Cup Prediction Bot audit pattern: fixture timezone parsing, duplicate cleanup after re-ingestion, live-odds production gate, and baseline-model caveats.
+## Output
+
+Produce a sectioned report with a severity rating per finding (info / warning /
+critical) and a concrete remediation step for each. Lead with a one-line verdict
+(healthy / degraded / failing) so the result is scannable at a glance.

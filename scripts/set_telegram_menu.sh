@@ -9,8 +9,8 @@ import sys, json, urllib.request, urllib.parse
 tok = sys.argv[1]
 cmds = [("trades","Open OANDA trades (live)"),("money","Account equity & P&L"),
  ("sys","System & services status"),("bots","Trading bot status"),
- ("cal","Apple/iCloud calendar — 7 days"),("wc","World Cup — today"),
- ("logs","ForexBot recent log"),("memory","Hermes memory"),
+ ("cal","Apple/iCloud calendar — 7 days"),("wc","Predictions — today"),
+ ("logs","FX-Bot recent log"),("memory","Hermes memory"),
  ("name","Switch persona/profile"),("help","Show all commands"),
  ("new","Start a fresh session"),("profile","Show active persona"),
  ("usage","Token usage & limits")]

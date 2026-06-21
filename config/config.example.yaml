@@ -478,11 +478,11 @@ command_allowlist:
 quick_commands:
   trades:
     type: exec
-    command: /root/bots/forexbot/venv/bin/python /root/trading-agent/oanda_trades.py
+    command: /root/bots/fx-bot/venv/bin/python /root/trading-agent/oanda_trades.py
       open
   money:
     type: exec
-    command: /root/bots/forexbot/venv/bin/python /root/trading-agent/oanda_trades.py
+    command: /root/bots/fx-bot/venv/bin/python /root/trading-agent/oanda_trades.py
       summary
   cal:
     type: exec
@@ -499,7 +499,7 @@ quick_commands:
     command: bash /root/.hermes/scripts/qc_bots.sh
   logs:
     type: exec
-    command: tail -n 30 /root/bots/forexbot/bot.log
+    command: tail -n 30 /root/bots/fx-bot/bot.log
   memory:
     type: exec
     command: head -c 3000 /root/.hermes/memories/MEMORY.md

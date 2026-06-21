@@ -7,9 +7,9 @@ import json, sqlite3, subprocess, time
 from pathlib import Path
 from datetime import datetime, timezone
 
-BOT_DIR = Path('/root/crypto-bot')
+BOT_DIR = Path('/root/market-bot')
 DB = BOT_DIR / 'state.sqlite3'
-STATE = Path('/root/.hermes/state/crypto_work_watchdog_state.json')
+STATE = Path('/root/.hermes/state/market_watchdog_state.json')
 STATE.parent.mkdir(parents=True, exist_ok=True)
 
 now = datetime.now(timezone.utc).isoformat(timespec='seconds')
@@ -18,12 +18,12 @@ alerts = []
 def sh(cmd):
     return subprocess.run(cmd, shell=True, text=True, capture_output=True, timeout=20)
 
-svc = sh('systemctl is-active crypto-bot.service 2>/dev/null || true').stdout.strip()
+svc = sh('systemctl is-active market-bot.service 2>/dev/null || true').stdout.strip()
 if svc != 'active':
-    alerts.append(f'🚨 crypto-bot.service is {svc or "unknown"}')
+    alerts.append(f'🚨 market-bot.service is {svc or "unknown"}')
 
 # Recent service errors/warnings.
-logs = sh("journalctl -u crypto-bot.service --since '35 minutes ago' --no-pager -o cat 2>/dev/null | tail -120").stdout.splitlines()
+logs = sh("journalctl -u market-bot.service --since '35 minutes ago' --no-pager -o cat 2>/dev/null | tail -120").stdout.splitlines()
 noisy = [l for l in logs if any(x in l.lower() for x in ['error', 'exception', 'traceback', 'failed', 'insufficient', 'blocked'])]
 if noisy:
     alerts.append('⚠️ Recent bot warnings/errors:\n' + '\n'.join(noisy[-8:]))

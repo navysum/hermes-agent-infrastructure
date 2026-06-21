@@ -5,8 +5,8 @@
 #   • it tried and FAILED (so he knows to step in).
 # Silent when everything is healthy. No AI/credits used.
 
-TK=$(grep '^TELEGRAM_BOT_TOKEN=' /root/trading-secrets.env | cut -d= -f2-)
-CH=$(grep '^TELEGRAM_HOME_CHANNEL=' /root/trading-secrets.env | cut -d= -f2-)
+TK=$(grep '^TELEGRAM_BOT_TOKEN=' /root/secrets.env | cut -d= -f2-)
+CH=$(grep '^TELEGRAM_HOME_CHANNEL=' /root/secrets.env | cut -d= -f2-)
 ACTIONS=""
 
 act() { ACTIONS="$ACTIONS$1
@@ -15,8 +15,8 @@ act() { ACTIONS="$ACTIONS$1
 # ── 1. Core services: restart anything down ───────────────────────────────────
 # trading-agent-telegram removed 2026-06-16 — it is now a FAILSAFE only, managed
 # in section 6 (started only if Hermes is down). Don't unconditionally restart it.
-for s in forexbot forexbot-enhanced-dashboard analytics-dashboard worldcup-ultra \
-         life-os-portal bots-dashboard crypto-bot crypto-bot-lab arb-scanner; do
+for s in fx-bot fx-bot-enhanced-dashboard analytics-dashboard predictions-ultra \
+         life-os-portal bots-dashboard market-bot market-bot-lab scanner; do
   st=$(systemctl is-active "$s.service")
   if [ "$st" != "active" ]; then
     systemctl restart "$s.service" 2>/dev/null
@@ -31,7 +31,7 @@ done
 
 # ── 2. Timers: re-enable anything that dropped off ────────────────────────────
 # morning-brief removed 2026-06-16 — the brief is now a Hermes cron job ("Morning Brief").
-for t in forexbot-analyst quantum-fx-usdjpy-execution worldcup-odds-refresh; do
+for t in fx-bot-analyst fx-exec predictions-odds-refresh; do
   if ! systemctl is-active --quiet "$t.timer"; then
     systemctl enable --now "$t.timer" 2>/dev/null
     systemctl is-active --quiet "$t.timer" \
@@ -40,18 +40,18 @@ for t in forexbot-analyst quantum-fx-usdjpy-execution worldcup-odds-refresh; do
   fi
 done
 
-# ── 3. ForexBot heartbeat: log stale >10 min while service "active" = hung ───
-LOG=/root/bots/forexbot/bot.log
-if systemctl is-active --quiet forexbot.service && [ -z "$(find $LOG -mmin -10 2>/dev/null)" ]; then
-  systemctl restart forexbot.service
+# ── 3. FX-Bot heartbeat: log stale >10 min while service "active" = hung ───
+LOG=/root/bots/fx-bot/bot.log
+if systemctl is-active --quiet fx-bot.service && [ -z "$(find $LOG -mmin -10 2>/dev/null)" ]; then
+  systemctl restart fx-bot.service
   sleep 8
   [ -n "$(find $LOG -mmin -1 2>/dev/null)" ] \
-    && act "🔧 FIXED: ForexBot was hung (log stale) → restarted, heartbeat back" \
-    || act "🚨 FAILED TO FIX: ForexBot restarted but no heartbeat yet — check bot.log"
+    && act "🔧 FIXED: FX-Bot was hung (log stale) → restarted, heartbeat back" \
+    || act "🚨 FAILED TO FIX: FX-Bot restarted but no heartbeat yet — check bot.log"
 fi
 
 # ── 4. OANDA live auth: nothing to auto-fix, but catch it within 30 min ──────
-ENVF=/root/bots/forexbot/.env
+ENVF=/root/bots/fx-bot/.env
 KEY=$(grep '^OANDA_API_KEY=' $ENVF | head -1 | cut -d= -f2)
 ACC=$(grep '^OANDA_ACCOUNT_ID=' $ENVF | head -1 | cut -d= -f2)
 CODE=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $KEY" \

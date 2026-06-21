@@ -17,8 +17,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 STATE_PATH = Path('/root/.hermes/state/oanda_signal_alerts.json')
-BB_DIR = Path('/root/bb-rsi-bot')
-QFX_DIR = Path('/root/quantum-forex-bot')
+BB_DIR = Path('/root/signal-bot')
+QFX_DIR = Path('/root/fx-signal-bot')
 NAV_LOW_THRESHOLD = 10.0
 NAV_ALERT_COOLDOWN_SECONDS = 6 * 60 * 60
 
@@ -149,7 +149,7 @@ def bb_rsi_alerts(state: dict) -> list[str]:
                 f"Est units {est_units} using {bot.CAPITAL_ALLOC_PCT:.0%} allocation of {currency} {balance:.2f}.\n"
                 f"Auto-trade filters: {'READY' if auto_ready else 'BLOCKED'} "
                 f"(session={sess_ok}, news={'clear' if not news_block else news_block}, spread={spread if spread is not None else 'unknown'}p/{spread_limit}p).\n"
-                f"Manual note: check OANDA open trades first so you don't double-enter alongside Homer’s automatic Sector 7-G bot."
+                f"Manual note: check OANDA open trades first so you don't double-enter alongside Homer’s automatic Strategy bot."
             )
             state['last_bb_signal_key'] = key
     except Exception as e:
@@ -163,18 +163,18 @@ def bb_rsi_alerts(state: dict) -> list[str]:
     return alerts
 
 
-def quantum_fx_alerts(state: dict) -> list[str]:
+def fx_signal_alerts(state: dict) -> list[str]:
     if not QFX_DIR.exists():
         return []
     try:
         env = os.environ.copy()
         env['PYTHONPATH'] = 'src'
         proc = subprocess.run(
-            [sys.executable, 'scripts/current_signal.py', '--instrument', 'USD_JPY', '--threshold', '0.30', '--model', 'quantum', '--target-mode', 'next_close', '--allow-live-data'],
+            [sys.executable, 'scripts/current_signal.py', '--instrument', 'USD_JPY', '--threshold', '0.30', '--model', 'fx_signal', '--target-mode', 'next_close', '--allow-live-data'],
             cwd=str(QFX_DIR), env=env, capture_output=True, text=True, timeout=45,
         )
         if proc.returncode != 0:
-            return [f"⚠️ Quantum FX signal alert check failed: {proc.stderr.strip()[-300:]}"]
+            return [f"⚠️ FX signal alert check failed: {proc.stderr.strip()[-300:]}"]
         sig = json.loads(proc.stdout)
         signal = sig.get('signal', 'FLAT')
         if signal == 'FLAT':
@@ -184,12 +184,12 @@ def quantum_fx_alerts(state: dict) -> list[str]:
             return []
         state['last_qfx_signal_key'] = key
         return [
-            f"📣 Quantum FX manual signal: {signal} USD_JPY @ {sig.get('latest_close')}\n"
+            f"📣 FX manual signal: {signal} USD_JPY @ {sig.get('latest_close')}\n"
             f"Score {sig.get('score')} vs threshold {sig.get('threshold')} | regime {sig.get('regime')} | model {sig.get('model_key')}/{sig.get('target_mode')}.\n"
             f"Automatic timer is live-capable too; check OANDA open trades before manual entry."
         ]
     except Exception as e:
-        return [f"⚠️ Quantum FX signal alert check failed: {type(e).__name__}: {e}"]
+        return [f"⚠️ FX signal alert check failed: {type(e).__name__}: {e}"]
 
 
 def main() -> int:
@@ -197,7 +197,7 @@ def main() -> int:
     messages = []
     messages.extend(nav_alert(state))
     messages.extend(bb_rsi_alerts(state))
-    messages.extend(quantum_fx_alerts(state))
+    messages.extend(fx_signal_alerts(state))
     state['last_checked_utc'] = datetime.now(timezone.utc).isoformat()
     save_state(state)
     if messages:

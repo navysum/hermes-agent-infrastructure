@@ -46,7 +46,7 @@ TRADING = (
     "backtest", "back-test", "pair", "position", "entry", "exit", "stop loss",
     "stop-loss", "take profit", "take-profit", "win rate", "winrate",
     "expectancy", "drawdown", "risk reward", "risk-reward", "rr ", " rr",
-    "pip", "pips", "eur_usd", "eur/usd", "gbp_usd", "usd_jpy", "forexbot",
+    "pip", "pips", "eur_usd", "eur/usd", "gbp_usd", "usd_jpy", "fx-bot",
     "bot", "sharpe", "equity curve", "p&l", "pnl", "session", "spread",
 )
 IMPROVE = (
