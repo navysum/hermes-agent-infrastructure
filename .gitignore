@@ -1,0 +1,74 @@
+# ---------------------------------------------------------------------------
+# Secrets & credentials — NEVER commit
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.env
+trading-secrets.env
+auth.json
+gateway_state.json
+channel_directory.json
+config.yaml
+config/secrets*
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+id_ecdsa
+*.crt
+.git-credentials
+.netrc
+
+# ---------------------------------------------------------------------------
+# Databases & local state
+# ---------------------------------------------------------------------------
+*.sqlite
+*.sqlite3
+*.db
+kanban.db
+memories/
+*.bak
+*.bak.*
+.job_state/
+cron/
+
+# ---------------------------------------------------------------------------
+# Logs & caches
+# ---------------------------------------------------------------------------
+*.log
+logs/
+*.cache
+.cache/
+audio_cache/
+image_cache/
+models_dev_cache.json
+__pycache__/
+*.pyc
+*.pyo
+
+# ---------------------------------------------------------------------------
+# Python / Node environments
+# ---------------------------------------------------------------------------
+venv/
+.venv/
+env/
+node_modules/
+dist/
+build/
+coverage/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---------------------------------------------------------------------------
+# OS / editor
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
