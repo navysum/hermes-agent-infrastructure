@@ -1,13 +1,35 @@
 # Hermes Agent Infrastructure
 
 > Self-hosted AI agent infrastructure using local/cloud model routing, LiteLLM,
-> automation workflows, and secure API integrations — running as a always-on
+> automation workflows, and secure API integrations — running as an always-on
 > service on a Linux VPS.
 
+[![CI](https://github.com/navysum/hermes-agent-infrastructure/actions/workflows/ci.yml/badge.svg)](https://github.com/navysum/hermes-agent-infrastructure/actions/workflows/ci.yml)
 [![Status](https://img.shields.io/badge/status-production-green.svg)]()
 [![Platform](https://img.shields.io/badge/platform-Linux%20VPS-blue.svg)]()
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
+
+**By [Craig Ataide](https://github.com/navysum)** — CS student focused on cybersecurity ·
+[GitHub](https://github.com/navysum) · [LinkedIn](https://www.linkedin.com/in/craigataide)
+
+![Hermes Agent Infrastructure — architecture overview](assets/architecture.svg)
+
+---
+
+## Table of contents
+
+- [Overview](#overview)
+- [What it does](#what-it-does)
+- [Technologies used](#technologies-used)
+- [Key features](#key-features)
+- [System architecture overview](#system-architecture-overview)
+- [Security considerations](#security-considerations)
+- [Setup instructions](#setup-instructions)
+- [What I learned](#what-i-learned)
+- [Recruiter-friendly summary](#recruiter-friendly-summary)
+- [Repository layout](#repository-layout)
+- [Contact](#contact)
 
 ---
 
@@ -296,6 +318,19 @@ consequential.
 
 ---
 
+## Contact
+
+**Craig Ataide** — Computer Science student focused on cybersecurity and
+practical AI/automation engineering.
+
+- GitHub: [@navysum](https://github.com/navysum)
+- LinkedIn: [craigataide](https://www.linkedin.com/in/craigataide)
+
+Open to software engineering, security, and AI/infra opportunities — feel free
+to reach out.
+
+---
+
 ## License
 
-[MIT](LICENSE)
+Released under the [MIT License](LICENSE) © 2026 Craig Ataide.

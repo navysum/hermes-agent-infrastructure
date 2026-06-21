@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  syntax:
+    name: Syntax check (python + bash)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Python syntax (py_compile)
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            python -m py_compile "$f" || fail=1
+          done < <(find scripts ops -name '*.py')
+          exit $fail
+      - name: Bash syntax (bash -n)
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            bash -n "$f" || fail=1
+          done < <(find scripts ops -name '*.sh')
+          exit $fail

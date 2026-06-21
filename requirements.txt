@@ -1,0 +1,10 @@
+# Runtime dependencies for the orchestration scripts in this repository.
+# The Hermes agent runtime itself is installed separately.
+#
+# Standard library is used heavily (http, json, sqlite3, urllib, zoneinfo,
+# pathlib, subprocess, fcntl, datetime, argparse) and needs no installation.
+
+requests>=2.31.0      # HTTP client used by the API integration scripts
+
+# Optional — only needed if you parse/validate the YAML config in Python:
+# PyYAML>=6.0
