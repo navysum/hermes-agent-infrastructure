@@ -1,0 +1,228 @@
+{
+  "generated_at_utc": "20260630T120042Z",
+  "purpose": "Out-of-sample style validation and provenance capture for the USD_JPY M15 Donchian fade research candidate.",
+  "safety": "READ_ONLY: fetched market candles and ran local backtest only; no order placement code is called.",
+  "instrument": "USD_JPY",
+  "candidate": {
+    "description": "Invert/fade M15 Donchian breakout signal with H1 trend context.",
+    "params": {
+      "family": "donchian_breakout",
+      "signal_tf": "m15",
+      "trend_tf": "h1",
+      "trend_ema": 100,
+      "entry_rsi_long": 0,
+      "entry_rsi_short": 100,
+      "adx_min": 18,
+      "adx_max": 0,
+      "sl_atr": 1.0,
+      "tp_atr": 2.0,
+      "max_hold_bars": 48,
+      "session_start": 7,
+      "session_end": 17,
+      "block_hours": [
+        10,
+        11
+      ],
+      "max_spread_pips": 1.6,
+      "atr_tf": "m15",
+      "long_enabled": true,
+      "short_enabled": true
+    },
+    "inverted_signal": true
+  },
+  "data_provenance": {
+    "adapter": "quantum_forex_bot.oanda_data.fetch_oanda_candles via shadow optimizer",
+    "requested_m5_candles": 30000,
+    "used_cache": false,
+    "raw_rows": 30000,
+    "feature_rows": 29754,
+    "from": "2026-02-05 05:00:00+00:00",
+    "to": "2026-06-30 11:55:00+00:00",
+    "raw_data_sha256": "053d50a92a167f52fccbde9cace2880dc029a78da7f6ce72c37bbf6fba13e4b6",
+    "optimizer_path": "/root/bots/forexbot/shadow/scalping_mtf_optimizer.py",
+    "optimizer_sha256": "0735b777dd7cc83571e93d6b2a3e9c3fa11841f0b074c62a8fdf4d249e13e51e",
+    "raw_validation": {
+      "passed": true,
+      "issues": []
+    }
+  },
+  "results": {
+    "overall": {
+      "trades": 34,
+      "wins": 12,
+      "losses": 22,
+      "win_rate_pct": 35.29,
+      "profit_factor": 1.09,
+      "net_r": 1.86,
+      "expectancy_r": 0.0547,
+      "median_r": -1.0,
+      "max_drawdown_r": 7.448,
+      "avg_hold_bars": 11.41,
+      "tp_exits": 11,
+      "sl_exits": 20,
+      "time_exits": 3
+    },
+    "train_70pct": {
+      "trades": 12,
+      "wins": 3,
+      "losses": 9,
+      "win_rate_pct": 25.0,
+      "profit_factor": 0.736,
+      "net_r": -2.158,
+      "expectancy_r": -0.1798,
+      "median_r": -1.0,
+      "max_drawdown_r": 4.158,
+      "avg_hold_bars": 12.75,
+      "tp_exits": 3,
+      "sl_exits": 8,
+      "time_exits": 1
+    },
+    "oos_30pct": {
+      "trades": 22,
+      "wins": 9,
+      "losses": 13,
+      "win_rate_pct": 40.91,
+      "profit_factor": 1.323,
+      "net_r": 4.017,
+      "expectancy_r": 0.1826,
+      "median_r": -1.0,
+      "max_drawdown_r": 7.448,
+      "avg_hold_bars": 10.68,
+      "tp_exits": 8,
+      "sl_exits": 12,
+      "time_exits": 2
+    },
+    "folds": [
+      {
+        "fold": 1,
+        "from": "2026-02-05 05:00:00+00:00",
+        "to": "2026-03-05 20:55:00+00:00",
+        "rows": 5951,
+        "summary": {
+          "trades": 2,
+          "wins": 0,
+          "losses": 2,
+          "win_rate_pct": 0.0,
+          "profit_factor": 0.0,
+          "net_r": -2.0,
+          "expectancy_r": -1.0,
+          "median_r": -1.0,
+          "max_drawdown_r": 1.0,
+          "avg_hold_bars": 3.0,
+          "tp_exits": 0,
+          "sl_exits": 2,
+          "time_exits": 0
+        }
+      },
+      {
+        "fold": 2,
+        "from": "2026-03-05 20:55:00+00:00",
+        "to": "2026-04-03 11:50:00+00:00",
+        "rows": 5952,
+        "summary": {
+          "trades": 3,
+          "wins": 1,
+          "losses": 2,
+          "win_rate_pct": 33.33,
+          "profit_factor": 1.0,
+          "net_r": 0.0,
+          "expectancy_r": 0.0,
+          "median_r": -1.0,
+          "max_drawdown_r": 1.0,
+          "avg_hold_bars": 13.0,
+          "tp_exits": 1,
+          "sl_exits": 2,
+          "time_exits": 0
+        }
+      },
+      {
+        "fold": 3,
+        "from": "2026-04-03 11:50:00+00:00",
+        "to": "2026-05-04 03:50:00+00:00",
+        "rows": 5951,
+        "summary": {
+          "trades": 5,
+          "wins": 1,
+          "losses": 4,
+          "win_rate_pct": 20.0,
+          "profit_factor": 0.633,
+          "net_r": -1.158,
+          "expectancy_r": -0.2315,
+          "median_r": -1.0,
+          "max_drawdown_r": 3.158,
+          "avg_hold_bars": 16.0,
+          "tp_exits": 1,
+          "sl_exits": 3,
+          "time_exits": 1
+        }
+      },
+      {
+        "fold": 4,
+        "from": "2026-05-04 03:50:00+00:00",
+        "to": "2026-06-01 19:50:00+00:00",
+        "rows": 5952,
+        "summary": {
+          "trades": 11,
+          "wins": 4,
+          "losses": 7,
+          "win_rate_pct": 36.36,
+          "profit_factor": 1.143,
+          "net_r": 1.0,
+          "expectancy_r": 0.0909,
+          "median_r": -1.0,
+          "max_drawdown_r": 6.0,
+          "avg_hold_bars": 7.91,
+          "tp_exits": 4,
+          "sl_exits": 7,
+          "time_exits": 0
+        }
+      },
+      {
+        "fold": 5,
+        "from": "2026-06-01 19:50:00+00:00",
+        "to": "2026-06-30 11:55:00+00:00",
+        "rows": 5952,
+        "summary": {
+          "trades": 11,
+          "wins": 6,
+          "losses": 5,
+          "win_rate_pct": 54.55,
+          "profit_factor": 2.353,
+          "net_r": 6.017,
+          "expectancy_r": 0.547,
+          "median_r": 0.4649,
+          "max_drawdown_r": 3.448,
+          "avg_hold_bars": 15.82,
+          "tp_exits": 5,
+          "sl_exits": 4,
+          "time_exits": 2
+        }
+      }
+    ],
+    "bootstrap_expectancy": {
+      "samples": 5000,
+      "p_expectancy_gt_0": 0.5858,
+      "ci95_expectancy_r": [
+        -0.395,
+        0.5207
+      ]
+    }
+  },
+  "anti_fake_output_checks": {
+    "trade_count_matches_csv_rows": 34,
+    "trades_sha256": "75cc525f0990635286c34ce9f5a9b18d0057d2784f3d0966443050285c81d2d8",
+    "rerun_trades_sha256": "75cc525f0990635286c34ce9f5a9b18d0057d2784f3d0966443050285c81d2d8",
+    "deterministic_rerun_match": true,
+    "summary_file": "/root/work/hermes-agent-infrastructure/research/fx-strategy-validation/results/usd_jpy_m15_donchian_fade_validation_20260630T120042Z.json",
+    "trades_file": "/root/work/hermes-agent-infrastructure/research/fx-strategy-validation/results/usd_jpy_m15_donchian_fade_trades_20260630T120042Z.csv"
+  },
+  "decision_gate": {
+    "minimum_trades": 100,
+    "minimum_oos_profit_factor": 1.1,
+    "minimum_oos_expectancy_r": 0.02,
+    "minimum_positive_folds_ratio": 0.6,
+    "passes": false,
+    "reason": "FAIL/RESEARCH_ONLY: not enough robust evidence for live deployment.",
+    "positive_folds_ratio": 0.4
+  }
+}
