@@ -50,3 +50,5 @@ jobs:
             bash -n "$f" || fail=1
           done < <(find scripts ops -name '*.sh')
           exit $fail
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
