@@ -1,0 +1,18 @@
+[Unit]
+Description=QuantumFX - OU Mean Reversion FX Bot (OANDA, 24/5)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/quantumfx-bot
+ExecStart=/usr/local/lib/trading-venv/bin/python -m quantumfx.bot
+Restart=always
+RestartSec=30
+Environment=PYTHONUNBUFFERED=1
+StandardOutput=append:/root/quantumfx-bot/logs/bot.log
+StandardError=append:/root/quantumfx-bot/logs/bot.log
+MemoryMax=700M
+
+[Install]
+WantedBy=multi-user.target

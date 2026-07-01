@@ -81,6 +81,10 @@ secrets out of the codebase.
   gateway goes down, then re-parks it once health is restored.
 - **Routes personas**: a lightweight classifier ([`scripts/persona_router.py`](scripts/persona_router.py))
   picks a response persona based on message intent.
+- **Runs a quantitative FX trading bot** ([`quantumfx/`](quantumfx/)): a
+  walk-forward validated Ornstein-Uhlenbeck mean-reversion strategy — winner
+  of a 10-strategy backtest tournament on real spread data — deployed 24/5
+  with server-side stops, margin guards, deploy gates and Telegram controls.
 
 ---
 
@@ -309,6 +313,10 @@ consequential.
 ├── ops/
 │   ├── self_heal.sh             # watchdog + failover
 │   └── hermes-dashboard-tailnet-proxy.py
+├── quantumfx/                   # walk-forward validated FX trading bot (see its README)
+│   ├── quantumfx/               #   live bot package (strategy/risk/execution)
+│   ├── research/                #   backtest harness, 10 strategies, agent validation reports
+│   └── tests/                   #   deploy-gate test suite
 ├── docs/
 │   └── ARCHITECTURE.md
 ├── .env.example                 # ~50 placeholder credential keys
