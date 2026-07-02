@@ -37,6 +37,15 @@ the Hermes agent infrastructure.
    negative, time-stops hurt, and portfolio vol-targeting destroyed Sharpe —
    all removed. Final verified config: **OOS Sharpe 0.80, +10.6%/yr, max
    drawdown -16.2%** at 1.5x costs (holds at 2x).
+6. **Post-deployment evolution, still gated by evidence** — a frequency-frontier
+   study ([reports/freq_frontier.md](research/reports/freq_frontier.md)) set the
+   entry threshold to the most-active config that still clears a pre-stated
+   quality bar, and a TA-gate study ([reports/ta_gates.md](research/reports/ta_gates.md),
+   robustness in [reports/d1veto_robustness.md](research/reports/d1veto_robustness.md))
+   added a **daily-trend veto** — never fade a pair >2% from its 200-day SMA —
+   lifting OOS Sharpe **0.80 → 0.94**. Every change beat the incumbent
+   out-of-sample before shipping; a scalping/"more trades" variant was tested
+   the same way and **rejected**.
 
 ## Production engineering
 
@@ -45,8 +54,19 @@ the Hermes agent infrastructure.
   instantly; 4% daily-loss halt; JPY vol circuit breaker (2024 carry-unwind
   defence).
 - **Coexists with another live bot on one account**: orders tagged via OANDA
-  client extensions, margin guard spends ≤45% of *available* margin, gross
-  exposure capped at 3× NAV.
+  client extensions; never stacks onto pairs already held by the other bot or
+  a manual trade.
+- **Margin-utilization sizing with a legacy mode**: entries are sized to a
+  fixed fraction (≤45%) of the margin *available at order time* — successive
+  positions consume geometrically less, so the account can never be sized into
+  a closeout — with the original vol-targeted/backtest-matched sizing one env
+  var away (`QFX_SIZING=vol`).
+- **AI-reviewed, not AI-driven**: every trading day is reconstructed from
+  broker transactions and graded on *process* separately from *outcome* by the
+  AI model the Hermes agent currently runs (see
+  [docs/SELF_HEALING.md](../docs/SELF_HEALING.md)); parameter suggestions land
+  in a queue that only a weekend walk-forward research gate can promote.
+  Execution stays 100% deterministic.
 - **Quantum-inspired allocation**: same-cycle entry candidates are pruned by a
   simulated-annealing selector maximizing signal strength minus a pairwise
   correlation penalty — validated against naive top-N selection before
@@ -69,7 +89,8 @@ deliverable is a *live-verified track record*, not a get-rich claim.
 quantumfx/
 ├── quantumfx/            # live bot package (strategy, risk, execution, state)
 ├── research/             # data fetcher, harness, 10 strategies, tournament runner
-│   └── reports/          # leaderboard + two agent validation reports
+│   └── reports/          # leaderboard, agent validation, frequency-frontier,
+│                         #   TA-gate + D1-veto robustness reports
 ├── scripts/              # operational tooling (bot comparison)
 ├── systemd/              # service unit
 └── tests/                # deploy-gate test suite

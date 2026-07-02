@@ -29,6 +29,8 @@ class StrategyConfig:
     vol_lookback: int = 72       # ann-vol window for position sizing
     bars_per_year: float = 1560.0  # H4 bars/yr (24/5 market)
     min_bars: int = 520
+    d1_veto_x: float = 0.02      # block fades against daily trend > x from SMA (0 = off)
+    d1_sma_len: int = 200        # daily SMA length for the trend veto
 
 
 def candles_to_df(candles: list[dict]) -> pd.DataFrame:
@@ -97,6 +99,30 @@ def entry_signal(ind: dict, cfg: StrategyConfig) -> int:
     if ind["z"] >= cfg.z_in:
         return -1
     return 0
+
+
+def d1_trend_dist(daily_df: pd.DataFrame, sma_len: int = 200) -> float | None:
+    """Signed % distance of the last COMPLETED daily close from its SMA.
+
+    Validated 2026-07-02 (research/reports/ta_gates.md + d1veto_robustness.md):
+    vetoing entries that fade a daily trend stronger than 2% lifted OOS 2022-26
+    Sharpe 0.80 -> 0.94 at 1.5x costs (0.72 -> 0.87 at 2x), 5/5 positive years,
+    and improved the 2019-21 holdout; robust across x in 1-3% and SMA 100-250.
+    """
+    c = daily_df["close"]
+    if len(c) < sma_len + 1:
+        return None
+    sma = c.rolling(sma_len).mean().iloc[-1]
+    if not np.isfinite(sma) or sma <= 0:
+        return None
+    return float(c.iloc[-1] / sma - 1)
+
+
+def d1_veto(sig: int, dist: float, x: float) -> bool:
+    """True = block: long into a >x downtrend, or short into a >x uptrend."""
+    if x <= 0:
+        return False
+    return (sig > 0 and dist < -x) or (sig < 0 and dist > x)
 
 
 def jpy_vol_spike(usdjpy_df: pd.DataFrame, atr_n: int = 14, window: int = 250, mult: float = 2.0) -> bool:

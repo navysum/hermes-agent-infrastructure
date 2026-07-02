@@ -68,7 +68,8 @@ class QuantumFX:
         return True
 
     # ── core cycle ──────────────────────────────────────────────────────
-    def process_pair(self, pair: str, open_by_pair: dict, prices: dict, halted: bool, jpy_blocked: bool) -> dict | None:
+    def process_pair(self, pair: str, open_by_pair: dict, prices: dict, halted: bool, jpy_blocked: bool,
+                     foreign_pairs: set | None = None) -> dict | None:
         """Handle exits for `pair`; return an entry candidate dict or None."""
         candles = self.client.candles(pair, config.GRANULARITY, count=600)
         if len(candles) < self.cfg.min_bars:
@@ -93,6 +94,9 @@ class QuantumFX:
 
         if halted or risk.kill_switch_active():
             return None
+        if foreign_pairs and pair in foreign_pairs:
+            log.info("%s entry blocked: pair held by another bot / manual trade", pair)
+            return None
         if jpy_blocked and pair.endswith("JPY"):
             log.info("%s entry blocked: JPY vol circuit breaker", pair)
             return None
@@ -101,7 +105,39 @@ class QuantumFX:
             return None
         if not self.spread_sane(pair, prices):
             return None
+        if not self.d1_trend_ok(pair, sig, ind):
+            return None
         return {"pair": pair, "sig": sig, "ind": ind}
+
+    def d1_trend_ok(self, pair: str, sig: int, ind: dict) -> bool:
+        """Daily-trend veto: never fade a pair >x from its daily SMA.
+
+        Fails CLOSED (entry blocked) on fetch/history problems, mirroring the
+        JPY circuit breaker — a missed entry is cheap, fading a macro trend
+        is the strategy's worst historical failure mode.
+        """
+        x = self.cfg.d1_veto_x
+        if x <= 0:
+            return True
+        try:
+            daily = strategy.candles_to_df(
+                self.client.candles(pair, "D", count=self.cfg.d1_sma_len + 60)
+            )
+            dist = strategy.d1_trend_dist(daily, self.cfg.d1_sma_len)
+        except Exception:
+            log.exception("%s d1 veto check failed (failing closed)", pair)
+            return False
+        if dist is None:
+            log.info("%s d1 veto: insufficient daily history, blocking", pair)
+            return False
+        if strategy.d1_veto(sig, dist, x):
+            log.info(
+                "%s entry vetoed: %s fades D1 trend %+.2f%% from SMA%d (limit %.1f%%)",
+                pair, "LONG" if sig > 0 else "SHORT", dist * 100, self.cfg.d1_sma_len, x * 100,
+            )
+            state.log_trade(pair, "REJECTED", reason="d1_trend_veto", z=ind["z"], detail={"d1_dist": round(dist, 4)})
+            return False
+        return True
 
     def candidate_corr(self, pairs: list[str]) -> "pd.DataFrame":
         import pandas as pd
@@ -119,11 +155,14 @@ class QuantumFX:
         if gross >= self.rcfg.max_gross * nav:
             log.info("%s entry blocked: gross £%.2f >= %.1fx NAV", pair, gross, self.rcfg.max_gross)
             return
-        units = risk.position_units(nav, entry, sl, pair, prices, self.rcfg, ann_vol=ind["ann_vol"])
+        margin_rate = float(self.meta[pair].get("marginRate", 0.0333))
+        units = risk.position_units(
+            nav, entry, sl, pair, prices, self.rcfg, ann_vol=ind["ann_vol"],
+            margin_available=float(acct["marginAvailable"]), margin_rate=margin_rate,
+        )
         if units < 1:
             log.info("%s units<1 at NAV £%.2f, skip", pair, nav)
             return
-        margin_rate = float(self.meta[pair].get("marginRate", 0.0333))
         if not risk.margin_ok(units, pair, entry, float(acct["marginAvailable"]), margin_rate, prices, self.rcfg):
             state.log_trade(pair, "REJECTED", reason="margin_guard", z=ind["z"])
             return
@@ -190,8 +229,12 @@ class QuantumFX:
         if halted and not was_halted:
             state.set_meta("halted_today", risk.utc_day())
             notify.send(f"DAILY HALT — NAV £{nav:.2f}, no new entries until tomorrow UTC")
-        open_qfx = self.qfx_trades()
+        open_all = self.client.open_trades()
+        open_qfx = [t for t in open_all if (t.get("clientExtensions") or {}).get("tag") == config.TAG]
         open_by_pair = {t["instrument"]: t for t in open_qfx}
+        # pairs held by anyone else (fx-live-bot / manual): never stack on them —
+        # on this account a second same-instrument trade doubles spread+margin
+        foreign_pairs = {t["instrument"] for t in open_all} - set(open_by_pair)
         prices = self.client.pricing(config.PAIRS)
         jpy_blocked = False
         try:
@@ -203,7 +246,7 @@ class QuantumFX:
         candidates = []
         for pair in config.PAIRS:
             try:
-                cand = self.process_pair(pair, open_by_pair, prices, halted or was_halted, jpy_blocked)
+                cand = self.process_pair(pair, open_by_pair, prices, halted or was_halted, jpy_blocked, foreign_pairs)
                 if cand:
                     candidates.append(cand)
             except Exception:

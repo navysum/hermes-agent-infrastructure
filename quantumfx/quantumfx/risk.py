@@ -20,16 +20,20 @@ KILL_FILE = Path(__file__).resolve().parent.parent / "KILL"
 
 @dataclass
 class RiskConfig:
-    per_position_vol: float = 0.07     # annualized vol target per position (backtest-matched)
-    max_weight: float = 1.5            # per-position weight cap (matches harness)
-    max_gross: float = 3.0             # total quantumfx gross exposure / NAV cap
-    risk_pct: float = 1.5              # hard CAP: % NAV risked entry->SL
+    # "margin" (2026-07-02): size each entry to the margin budget so the
+    # account's available units are actually used. "vol" is the legacy
+    # backtest-matched sizing (7% vol target + 1.5% risk cap, ~30-50 units).
+    sizing_mode: str = "margin"
+    per_position_vol: float = 0.07     # annualized vol target per position (vol mode)
+    max_weight: float = 1.5            # per-position weight cap (vol mode)
+    max_gross: float = 25.0            # gross exposure / NAV cap (legacy vol-mode value: 3.0)
+    risk_pct: float = 1.5              # vol mode: hard CAP % NAV risked entry->SL
     max_positions: int = 12            # universe bound (uncapped won the backtest)
-    max_units: int = 200               # absolute per-trade unit cap
+    max_units: int = 600               # absolute per-trade unit cap (legacy: 200)
     margin_budget_frac: float = 0.45   # of marginAvailable at order time
     max_daily_loss_pct: float = 4.0    # halt for the UTC day beyond this
     sl_atr_mult: float = 3.0           # catastrophe stop distance
-    min_rr_tp: float = 1.5             # optional TP floor (the operator's house rule)
+    min_rr_tp: float = 1.5             # optional TP floor (operator house rule)
 
 
 def kill_switch_active() -> bool:
@@ -66,10 +70,23 @@ def position_units(
     prices: dict,
     cfg: RiskConfig,
     ann_vol: float | None = None,
+    margin_available: float = 0.0,
+    margin_rate: float = 0.0,
 ) -> int:
-    """Vol-targeted units (primary, matches the backtest sizing) with a
-    risk-per-trade cap (entry->SL loss ≤ risk_pct% of NAV) and unit cap."""
+    """Position size in units.
+
+    margin mode (default): consume margin_budget_frac of the margin available
+    right now — the stop stays a catastrophe stop, sizing no longer keys off
+    it. Falls back to vol-mode sizing if margin data wasn't supplied.
+    vol mode: vol-targeted units with a risk-per-trade cap (entry->SL loss
+    ≤ risk_pct% of NAV) and unit cap — the backtest-matched sizing.
+    """
     q2g = quote_to_gbp(pair, prices)
+    if cfg.sizing_mode == "margin" and margin_available > 0 and margin_rate > 0:
+        unit_value_gbp = entry * q2g
+        budget_gbp = margin_available * cfg.margin_budget_frac
+        units = int(budget_gbp / (unit_value_gbp * margin_rate))
+        return max(0, min(units, cfg.max_units))
     caps = [cfg.max_units]
     if ann_vol and ann_vol > 0:
         weight = min(cfg.per_position_vol / max(ann_vol, 0.02), cfg.max_weight)

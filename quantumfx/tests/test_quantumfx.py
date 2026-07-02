@@ -86,6 +86,20 @@ def test_position_units_zero_distance():
     assert position_units(16.0, 1.1, 1.1, "EUR_USD", {}, cfg) == 0
 
 
+def test_position_units_margin_mode():
+    cfg = RiskConfig()  # sizing_mode defaults to "margin"
+    prices = {"GBP_USD": {"bids": [{"price": "1.25"}], "asks": [{"price": "1.25"}]}}
+    units = position_units(16.0, 1.1000, 1.0940, "EUR_USD", prices, cfg,
+                           ann_vol=0.08, margin_available=16.0, margin_rate=0.0333)
+    # budget = 45% of toy margin at 3.33% -> ~245 units
+    expected = int(16.0 * 0.45 / ((1.1 / 1.25) * 0.0333))
+    assert units == min(expected, cfg.max_units)
+    assert units > 100  # order of magnitude above the legacy vol sizing
+    # missing margin data falls back to the legacy vol/risk sizing
+    fallback = position_units(16.0, 1.1000, 1.0940, "EUR_USD", prices, cfg, ann_vol=0.08)
+    assert 0 < fallback < 60
+
+
 def test_anneal_drops_correlated_duplicate():
     from quantumfx.strategy import anneal_candidates
     cands = [
@@ -119,6 +133,29 @@ def test_gbp_quote_pair_conversion_identity():
     cfg = RiskConfig(risk_pct=1.5, max_units=200)
     units = position_units(16.0, 0.8600, 0.8560, "EUR_GBP", {}, cfg)
     assert abs(units - (16 * 0.015) / 0.0040) <= 1  # float truncation tolerance
+
+
+def test_d1_trend_veto():
+    from quantumfx.strategy import d1_trend_dist, d1_veto
+    idx = pd.date_range("2025-01-01", periods=260, freq="D", tz="UTC")
+    # steady 20% grind up over a year -> last close well above SMA200
+    up = pd.DataFrame({"close": np.linspace(1.00, 1.20, 260)}, index=idx)
+    dist = d1_trend_dist(up, 200)
+    assert dist is not None and dist > 0.02
+    assert d1_veto(-1, dist, 0.02) is True      # short fades the uptrend: veto
+    assert d1_veto(1, dist, 0.02) is False      # long rides it: allowed
+    down = pd.DataFrame({"close": np.linspace(1.20, 1.00, 260)}, index=idx)
+    dist_dn = d1_trend_dist(down, 200)
+    assert dist_dn is not None and dist_dn < -0.02
+    assert d1_veto(1, dist_dn, 0.02) is True    # long fades the downtrend: veto
+    assert d1_veto(-1, dist_dn, 0.02) is False
+    # flat market: nothing vetoed either way
+    flat = pd.DataFrame({"close": np.full(260, 1.10)}, index=idx)
+    assert d1_veto(1, d1_trend_dist(flat, 200), 0.02) is False
+    assert d1_veto(-1, d1_trend_dist(flat, 200), 0.02) is False
+    # x=0 disables; short history returns None
+    assert d1_veto(-1, 0.5, 0.0) is False
+    assert d1_trend_dist(up.iloc[:100], 200) is None
 
 
 def test_jpy_circuit_breaker():
