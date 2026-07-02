@@ -93,13 +93,31 @@ Two classes of scheduled work, both driven by the agent's cron scheduler:
 - **Composio** — MCP tool router for additional SaaS actions.
 
 ### 8. Operational resilience (`ops/`)
-- **`self_heal.sh`** — a watchdog run on a short interval: unmasks/restarts the
-  core services if down, and **fails over to a backup agent** if the primary
-  gateway is unhealthy, re-parking it automatically once health returns.
+Self-healing is layered — a deterministic watchdog floor, an AI-driven nightly
+diagnosis that routes through **whatever model the agent currently runs**, and
+a weekend research gate for parameter evolution. The full design is in
+[SELF_HEALING.md](SELF_HEALING.md).
+- **`self_heal.sh`** — L0: a watchdog run on a short interval: unmasks/restarts
+  the core services if down, and **fails over to a backup agent** if the
+  primary gateway is unhealthy, re-parking it automatically once health returns.
+- **`ai_daily_review.py`** — L1: nightly broker-ledger reconstruction,
+  process-vs-outcome trade grading, and a smart heal in which the current
+  model diagnoses the box from evidence and proposes actions that are
+  validated against a hard whitelist before anything executes.
 - **`hermes-dashboard-tailnet-proxy.py`** — a localhost-bound reverse proxy that
   lets a private Tailscale network reach the dashboard while the dashboard
   itself keeps rejecting non-local `Host` headers. The dashboard is never bound
   to a public interface.
+
+### 9. Trading stack (`quantumfx/`, `scripts/bot_control_centre.py`)
+- **QuantumFX** — walk-forward validated OU mean-reversion bot (see
+  [its README](../quantumfx/README.md)); margin-utilization sizing, server-side
+  stops, daily-loss halt, kill-switch file.
+- **Bot Control Centre** — inventory, global risk policy (loss/exposure/staleness
+  limits), a pre-trade guard every bot must consult, and dashboards.
+- **Evolution gate** — weekend-only promotion of parameter candidates that beat
+  the incumbent out-of-sample; the AI can propose, only the backtest referee
+  can promote.
 
 ## Security model
 

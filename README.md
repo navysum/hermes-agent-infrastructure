@@ -76,15 +76,25 @@ secrets out of the codebase.
   OANDA (FX account NAV/P&L), Whoop (recovery/sleep → Notion), Notion
   (tasks/health/projects), iCloud CalDAV (calendar), Composio (MCP tool router),
   Slack/Discord.
-- **Self-heals**: a watchdog ([`ops/self_heal.sh`](ops/self_heal.sh)) keeps the
-  core services alive, and revives a **failsafe backup agent** if the primary
-  gateway goes down, then re-parks it once health is restored.
+- **Self-heals in layers** (full design: [`docs/SELF_HEALING.md`](docs/SELF_HEALING.md)):
+  a deterministic watchdog ([`ops/self_heal.sh`](ops/self_heal.sh)) keeps core
+  services alive and fails over to a backup agent, while a nightly **AI review**
+  ([`ops/ai_daily_review.py`](ops/ai_daily_review.py)) reconstructs the trading
+  day from the broker ledger, grades process vs. outcome, and lets **whatever
+  model the agent currently runs** diagnose the box — its proposed actions are
+  validated against a hard whitelist before anything executes.
 - **Routes personas**: a lightweight classifier ([`scripts/persona_router.py`](scripts/persona_router.py))
   picks a response persona based on message intent.
 - **Runs a quantitative FX trading bot** ([`quantumfx/`](quantumfx/)): a
   walk-forward validated Ornstein-Uhlenbeck mean-reversion strategy — winner
-  of a 10-strategy backtest tournament on real spread data — deployed 24/5
-  with server-side stops, margin guards, deploy gates and Telegram controls.
+  of a 10-strategy backtest tournament on real spread data, upgraded post-
+  deployment with a daily-trend veto (OOS Sharpe 0.80 → 0.94) — deployed 24/5
+  with server-side stops, margin-utilization sizing, deploy gates and Telegram
+  controls.
+- **Evolves itself, with a referee**: the nightly AI review may queue bounded
+  parameter candidates, but only a weekend **walk-forward research gate**
+  can promote one — a candidate must beat the incumbent out-of-sample before
+  it ships. AI proposes; the backtest disposes.
 
 ---
 
@@ -119,8 +129,11 @@ secrets out of the codebase.
 - 🛡️ **Safety rails** — command allowlist, tool approvals, read-only financial
   integrations (the agent **observes and alerts; it never executes trades or
   moves money**), and secret redaction in logs.
-- ♻️ **Operational resilience** — self-healing watchdog with automatic failover
-  to a backup agent and auto-recovery.
+- ♻️ **Layered self-healing** — a deterministic watchdog floor (no AI, no
+  credits), an AI diagnosis layer that is **model-agnostic by construction**
+  (it routes through the agent's *current* model, so swapping models upgrades
+  the healer with zero code changes), and a weekend research gate for
+  parameter evolution. Static thresholds for safety, models for judgement.
 
 ---
 
@@ -169,11 +182,23 @@ flowchart TD
     AGN --> AGENT
     AGENT --> Integrations
 
-    WATCH[[self_heal.sh watchdog]] -. keeps alive / failover .-> Core
+    subgraph Trading["Trading stack (deterministic execution)"]
+        QFX[QuantumFX bot<br/>OU mean reversion · 24/5]
+        BCC[Bot Control Centre<br/>risk policy + pre-trade guard]
+    end
+
+    WATCH[[L0 self_heal.sh<br/>30-min watchdog]] -. keeps alive / failover .-> Core
+    REVIEW[[L1 AI daily review<br/>nightly · current model]] -. diagnose + heal<br/>whitelist-validated .-> Trading
+    REVIEW -.-> ROUTER
+    EVO[[L2 evolution gate<br/>weekend walk-forward referee]] -. promotes only OOS winners .-> QFX
+    REVIEW -. queues bounded candidates .-> EVO
+    QFX --> OANDA
+    BCC --> QFX
 ```
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the component-by-component
-breakdown and the repository layout.
+breakdown, and [`docs/SELF_HEALING.md`](docs/SELF_HEALING.md) for the
+three-layer self-healing / self-evolution design.
 
 ---
 
@@ -301,6 +326,7 @@ consequential.
 ├── config/
 │   └── config.example.yaml      # model routing, personas, cron, telegram (redacted)
 ├── scripts/                     # ~30 orchestration & integration jobs (sanitized)
+│   ├── bot_control_centre.py    #   bot inventory, global risk policy, pre-trade guard
 │   ├── persona_router.py        #   intent → persona classifier
 │   ├── oanda_signal_alerts.py   #   read-only FX account alerts
 │   ├── whoop_*.py / *.sh        #   health sync (OAuth2 → Notion)
@@ -311,17 +337,36 @@ consequential.
 │   ├── service-health-check/    #   generic, read-only service health skill
 │   └── infrastructure-audit/    #   audit framework with severity ratings
 ├── ops/
-│   ├── self_heal.sh             # watchdog + failover
+│   ├── self_heal.sh             # L0: deterministic watchdog + failover (30-min)
+│   ├── ai_daily_review.py       # L1: nightly AI review + smart heal (current model)
 │   └── hermes-dashboard-tailnet-proxy.py
 ├── quantumfx/                   # walk-forward validated FX trading bot (see its README)
 │   ├── quantumfx/               #   live bot package (strategy/risk/execution)
-│   ├── research/                #   backtest harness, 10 strategies, agent validation reports
+│   ├── research/                #   backtest harness, 10 strategies, validation +
+│   │                            #   frequency-frontier + TA-gate reports
+│   ├── scripts/                 #   operational tooling (bot comparison)
+│   ├── systemd/                 #   service unit
 │   └── tests/                   #   deploy-gate test suite
+├── research/
+│   └── fx-strategy-validation/  # pre-QuantumFX strategy validation evidence
+│                                #   (incl. the rejected scalping study + archive)
+├── tests/
+│   └── test_bot_control_centre.py
 ├── docs/
-│   └── ARCHITECTURE.md
+│   ├── ARCHITECTURE.md          # component-by-component breakdown
+│   └── SELF_HEALING.md          # L0/L1/L2 self-heal + evolution design
+├── assets/                      # architecture + self-heal diagrams (SVG)
 ├── .env.example                 # ~50 placeholder credential keys
 └── .gitignore
 ```
+
+**Where to find what:** the README is the overview; deep dives live in exactly
+one place each — architecture in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
+self-healing/evolution in [`docs/SELF_HEALING.md`](docs/SELF_HEALING.md), the
+trading bot in [`quantumfx/README.md`](quantumfx/README.md), pre-deployment
+validation evidence in
+[`research/fx-strategy-validation/`](research/fx-strategy-validation/), and the
+security posture in [`SECURITY.md`](SECURITY.md).
 
 ---
 

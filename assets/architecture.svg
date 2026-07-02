@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 680" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 822" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
   <defs>
     <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
       <path d="M0,0 L7,3 L0,6 Z" fill="#94a3b8"/>
@@ -16,7 +16,7 @@
   </defs>
 
   <!-- card -->
-  <rect x="8" y="8" width="924" height="664" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <rect x="8" y="8" width="924" height="806" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
 
   <!-- header -->
   <text x="32" y="46" fill="#0f172a" font-size="23" font-weight="800">Hermes Agent Infrastructure</text>
@@ -32,8 +32,8 @@
 
   <!-- watchdog (top-right) -->
   <rect x="640" y="112" width="270" height="46" rx="9" fill="#fef2f2" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="5 4"/>
-  <text x="775" y="134" class="t" text-anchor="middle" fill="#b91c1c">self_heal · watchdog</text>
-  <text x="775" y="150" class="ts" text-anchor="middle" fill="#ef4444">keep-alive + automatic failover</text>
+  <text x="775" y="134" class="t" text-anchor="middle" fill="#b91c1c">L0 self_heal · watchdog</text>
+  <text x="775" y="150" class="ts" text-anchor="middle" fill="#ef4444">keep-alive + automatic failover · no AI</text>
 
   <!-- ===== HERMES CORE ===== -->
   <text x="32" y="200" class="lbl">HERMES CORE · systemd</text>
@@ -52,7 +52,7 @@
   <!-- ===== MODELS ===== -->
   <text x="32" y="312" class="lbl">MODELS</text>
   <rect x="120" y="322" width="430" height="56" rx="9" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1.3"/>
-  <text x="335" y="346" class="t" text-anchor="middle">Cloud LLMs</text>
+  <text x="335" y="346" class="t" text-anchor="middle">Cloud LLMs — hot-swappable current default</text>
   <text x="335" y="363" class="ts" text-anchor="middle">OpenAI / Codex · Anthropic · OpenRouter · Gemini</text>
 
   <rect x="600" y="322" width="260" height="56" rx="9" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1.3"/>
@@ -105,9 +105,43 @@
   <!-- watchdog -> core (failover, dashed red) -->
   <path stroke="#ef4444" stroke-width="1.6" fill="none" stroke-dasharray="5 4" d="M700,158 L700,182 L300,182 L300,206" marker-end="url(#arrowR)"/>
 
+  <!-- ===== TRADING + SELF-HEAL / EVOLUTION ===== -->
+  <text x="32" y="640" class="lbl">TRADING · deterministic execution — AI reviews, never trades</text>
+
+  <rect x="120" y="650" width="200" height="60" rx="9" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.3"/>
+  <text x="220" y="674" class="t" text-anchor="middle">QuantumFX bot</text>
+  <text x="220" y="691" class="ts" text-anchor="middle">OU mean reversion · 24/5</text>
+
+  <rect x="340" y="650" width="200" height="60" rx="9" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.3"/>
+  <text x="440" y="674" class="t" text-anchor="middle">Bot Control Centre</text>
+  <text x="440" y="691" class="ts" text-anchor="middle">risk policy · pre-trade guard</text>
+
+  <rect x="560" y="650" width="180" height="60" rx="9" fill="#fef2f2" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <text x="650" y="674" class="t" text-anchor="middle" fill="#b91c1c">L1 AI daily review</text>
+  <text x="650" y="691" class="ts" text-anchor="middle" fill="#ef4444">nightly · current model</text>
+
+  <rect x="760" y="650" width="150" height="60" rx="9" fill="#faf5ff" stroke="#a855f7" stroke-width="1.3"/>
+  <text x="835" y="674" class="t" text-anchor="middle">L2 evolution gate</text>
+  <text x="835" y="691" class="ts" text-anchor="middle">weekend OOS referee</text>
+
+  <!-- guard -> bot -->
+  <path class="edge" d="M340,680 L320,680" marker-end="url(#arrow)"/>
+  <!-- bot -> OANDA integration -->
+  <path class="edge" d="M195,650 L195,594" marker-end="url(#arrow)"/>
+  <!-- AI review -> model router (uses whatever model is current) -->
+  <path stroke="#ef4444" stroke-width="1.6" fill="none" stroke-dasharray="5 4" d="M650,650 L650,626 L920,626 L920,240 L860,240" marker-end="url(#arrowR)"/>
+  <text x="912" y="450" class="ts" fill="#ef4444" text-anchor="middle" transform="rotate(-90 912 450)">heal + review via CURRENT model</text>
+  <!-- AI review -> trading (whitelist-validated heal) -->
+  <path stroke="#ef4444" stroke-width="1.6" fill="none" stroke-dasharray="5 4" d="M560,680 L540,680" marker-end="url(#arrowR)"/>
+  <!-- AI review -> evolution gate (bounded candidates) -->
+  <path stroke="#a855f7" stroke-width="1.6" fill="none" d="M740,680 L760,680" marker-end="url(#arrow)"/>
+  <!-- evolution gate -> bot (promote OOS winners only) -->
+  <path stroke="#a855f7" stroke-width="1.6" fill="none" d="M835,710 L835,730 L220,730 L220,710" marker-end="url(#arrow)"/>
+  <text x="527" y="745" class="ts" text-anchor="middle" fill="#7c3aed">parameter candidates promoted ONLY after beating the incumbent out-of-sample</text>
+
   <!-- security footer -->
-  <rect x="120" y="616" width="740" height="40" rx="9" fill="#f1f5f9" stroke="#e2e8f0"/>
-  <text x="490" y="641" text-anchor="middle" font-size="12" fill="#475569">
-    🔒  Secrets in <tspan font-weight="700">.env</tspan> (git-ignored) · read-only money/health · command allowlist + approvals · private-network dashboard
+  <rect x="120" y="758" width="740" height="40" rx="9" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="490" y="783" text-anchor="middle" font-size="12" fill="#475569">
+    🔒  Secrets in <tspan font-weight="700">.env</tspan> (git-ignored) · read-only agent on money/health · command allowlist + approvals · private-network dashboard
   </text>
 </svg>
